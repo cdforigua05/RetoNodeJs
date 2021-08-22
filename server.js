@@ -12,8 +12,9 @@ async function getClientesfromServer(){
     return resp.data
 }
 
-function json2html(json,tipo){
-    fs.readFile("tableSketch.html", "utf8", (err,data) =>{
+async function json2html(json,tipo){
+    try{
+        const data = fs.readFileSync("tableSketch.html", {encoding:"utf8"});
         var newPage = data.substring(0, data.indexOf("<h2"))+"\n";
         newPage += "<h2 align='center'> Lista de " + tipo +"</h2> \n";
         const topSection = data.substring(data.indexOf("<table"), data.indexOf("<tbody"));
@@ -36,10 +37,10 @@ function json2html(json,tipo){
             newPage += fila; 
         }
         newPage+= lastSection
-        fs.writeFile("tableFill.html", newPage, "utf-8", (err)=>{
-            if (err) console.log("Error writing file"); 
-        })
-    } );
+        return newPage
+    }catch(err){
+        console.log(err)
+    }
 }
 
 http.createServer(async function(req, res){
@@ -47,14 +48,13 @@ http.createServer(async function(req, res){
     res.writeHead("200",{'Content-Type': 'text/html'});
     if (req.url == "/api/proveedores"){
         const json = await getProveedoresfromServer();
-        json2html(json,"proveedores")
+        var rta = await json2html(json,"proveedores");
     }
     else if (req.url == "/api/clientes"){
         const json = await getClientesfromServer();
-        json2html(json, "cliente")
+        var rta = await json2html(json, "cliente");
     }
+    console.log()
+    res.end(rta)
     
-    fs.readFile("tableFill.html", "utf8", (err,data)=>{
-        res.end(data);
-    })
 }).listen(8081)
